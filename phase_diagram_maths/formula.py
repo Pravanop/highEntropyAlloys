@@ -33,9 +33,15 @@ def batch_mixing_enthalpy_bycomp(
 	:return: an array of mixing enthalpy values in ev/atom
 	"""
 	alloy_enthalpies = []
-	for idx, alloy_energy in enumerate(alloy_energies):
-		alloy_enthalpies.append(mixing_enthalpy(alloy_energy, np.array([mol_fraction[idx+1], 1- mol_fraction[
-			idx+1]]), ele_list = ele_list, end_member_energy = end_member_energy))
+	for idx , alloy_energy in enumerate(alloy_energies) :
+		alloy_enthalpies.append(
+			mixing_enthalpy(
+				alloy_energy , np.array(
+						[mol_fraction[idx + 1] , 1 - mol_fraction[
+							idx + 1]]
+						) , ele_list = ele_list , end_member_energy = end_member_energy
+				)
+			)
 	return np.array(alloy_enthalpies)
 
 def gibbs_energy(
@@ -123,6 +129,44 @@ def dft_energy_per_atom(
 	
 	return alloy_energies / no_atoms
 
+def intermetallic_energy(a , b , c , T , H0) :
+	"""
+
+	:param a:
+	:param b:
+	:param c:
+	:param T:
+	:param H0:
+	:return:
+	"""
+	if T == 0 :
+		return H0
+	else :
+		T = T / 1000  # T scaling as per NIST
+		energy = H0
+		energy += (a * T * (1 - np.log(T)))
+		energy += - (0.5 * b * (T ** 2))
+		energy += -((c / 6) * (T ** 3))
+		return energy * 1.036e-5  # J/mol to ev/atom factor
+
+def kopp_neumann_law(
+		massA: float ,
+		massB: float ,
+		mol_fraction: float ,
+		cpA: np.array ,
+		cpB: np.array
+		) -> np.array :
+	"""
+
+	:param massA:
+	:param massB:
+	:param mol_fraction:
+	:param cpA:
+	:param cpB:
+	:return:
+	"""
+	return (massA * mol_fraction / (massA + massB)) * cpA + (massB * (1 - mol_fraction) / (massA + massB)) * cpB
+
 def get_mixing_enthalpy_system(
 		dft_alloy_energies: np.array ,
 		mol_fraction: np.array ,
@@ -144,8 +188,8 @@ def get_mixing_enthalpy_system(
 	"""
 	dft_energy_atom = dft_energy_per_atom(dft_alloy_energies , no_atoms)
 	return batch_mixing_enthalpy_bycomp(
-		alloy_energies = dft_energy_atom ,
-		mol_fraction = mol_fraction ,
-		ele_list = system ,
-		end_member_energy = end_member_energy
-		)
+			alloy_energies = dft_energy_atom ,
+			mol_fraction = mol_fraction ,
+			ele_list = system ,
+			end_member_energy = end_member_energy
+			)

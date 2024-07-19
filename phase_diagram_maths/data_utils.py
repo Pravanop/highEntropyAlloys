@@ -1,8 +1,11 @@
+import json
+
 import numpy as np
-from scipy.optimize import curve_fit , fsolve
+from scipy.optimize import curve_fit
 from sklearn.metrics import r2_score
-from phase_diagram_maths.formula import gibbs_energy , configEntropy
 from itertools import combinations
+from phase_diagram_maths.formula import get_mixing_enthalpy_system
+import pandas as pd
 
 def fit_parameter(y_pred , y_data) :
 	"""
@@ -44,14 +47,6 @@ def get_more_points(func , points , popt) :
 	xi = np.linspace(0 , 1 , points)
 	return xi , func(xi , *popt)
 
-def curve(x , y) :
-	"""
-
-	:param x:
-	:param y:
-	:return:
-	"""
-	return np.vstack((x , y)).T
 
 def eV_to_meV(x) :
 	"""
@@ -59,41 +54,83 @@ def eV_to_meV(x) :
 	:param x:
 	:return:
 	"""
-	return np.round(x * 1000 , 1)
+	return np.round(x * 1000 , 2)
 
-def two_point_line_equation(two_points , x) :
+
+def get_enthalpy_fit(
+		mol_fraction , dft_energies , system ,single_energy, no_atoms , lattice , model
+		) :
 	"""
 
-	:param two_points:
-	:param x:
+	:param mol_fraction:
+	:param single_energy_path:
+	:param dft_energies:
+	:param system:
+	:param no_atoms:
+	:param lattice:
+	:param model:
 	:return:
 	"""
-	return ((two_points[1][1] - two_points[0][1]) / (two_points[1][0] - two_points[0][0])) * (x - two_points[0][0]) + \
-		two_points[0][1]
+	
+	end_member_energy = [single_energy[i]["dft-energy"] for i in system]
+	alloy_enthalpies = get_mixing_enthalpy_system(
+			dft_alloy_energies = dft_energies ,
+			mol_fraction = mol_fraction ,
+			system = system ,
+			end_member_energy = end_member_energy ,
+			no_atoms = no_atoms ,
+			lattice = lattice
+			)
+	
+	alloy_enthalpies = np.pad(alloy_enthalpies , (1 , 1) , 'constant')
+	ydata = alloy_enthalpies.copy()
+	isnan = np.isnan(ydata)
+	ydata = ydata[~isnan]
+	xdata = mol_fraction.copy()
+	xdata = xdata[~isnan]
+	r2 , popt = solution_fit(xdata = xdata , ydata = ydata , func = model)
+	print("R2:" , r2)
+	
+	x = np.linspace(0 , 1 , 71)
+	# print("Omega1: ",popt[0], " Omega2: ", popt[1])
+	mix_enthalpy = model(x , *popt)
+	
+	return alloy_enthalpies , x , mix_enthalpy
 
-def find_common_tangent_same(gibbs , x) :
+def process_inputs(
+		alloy: str , lattice: str , data_path: str =
+		"/Users/pravanomprakash/Documents/Projects/highEntropyAlloys/data"
+		) :
+	data_path = f"{data_path}/binary_{lattice}.csv"
+	df_BCC = pd.read_csv(
+			data_path , header = 0 ,
+			index_col = "Unnamed: 0"
+			)
+	mol_fraction = np.append(np.array(df_BCC.columns).astype(float) , 1)
+	mol_fraction = np.append(0 , mol_fraction)
+	dft_energies = np.array(df_BCC.loc[alloy].to_list())
+	
+	system = alloy.split('-')
+	system.reverse()
+	
+	return mol_fraction , dft_energies , system
+
+def load_json_to_dict(json_file_path = "/Users/pravanomprakash/Documents/Projects/highEntropyAlloys/data/single_energy.json"):
+    try:
+        with open(json_file_path, 'r') as file:
+            data = json.load(file)
+        return data
+    except json.JSONDecodeError:
+        print("Error: The file is not a valid JSON.")
+    except FileNotFoundError:
+        print(f"Error: The file {json_file_path} was not found.")
+    except Exception as e:
+        print(f"An error occurred: {e}")
+
+def flatten(xss) :
 	"""
 
-	:param gibbs:
-	:param x:
+	:param xss:
 	:return:
 	"""
-	answer = []
-	
-	gibbs_curve = curve(x , gibbs)
-	combs = np.array(list(combinations(gibbs_curve , 2)))
-	for idx , two_point in enumerate(combs) :
-		
-		line = two_point_line_equation(two_points = two_point , x = x)
-		diff = gibbs - line
-		
-		if np.any(diff < 0) :
-			continue
-		
-		else :
-			if abs(two_point[0][0] - two_point[1][0]) <= 0.1 :
-				continue
-			else :
-				answer.append(two_point)
-	
-	return answer
+	return [x for xs in xss for x in xs]
