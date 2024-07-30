@@ -14,10 +14,10 @@ font = {
 		}
 matplotlib.rc('font' , **font)
 
-alloy = "Cr-W"
-lattice = "BCC"
+alloy = "Ti-Hf"
+lattice = "HCP"
 mol_fraction , dft_energies , system = process_inputs(alloy = alloy , lattice = lattice)
-single_energy_path = "/Users/pravanomprakash/Documents/Projects/highEntropyAlloys/data/single_energy.json"
+single_energy_path = "/data/single_energy.json"
 single_energy = load_json_to_dict(single_energy_path)
 
 alloy_enthalpies , x , mix_enthalpy = get_enthalpy_fit(
@@ -37,7 +37,7 @@ mix_enthalpy = {
 # 		)
 # plt.show()
 
-T_range = (500 , 3000 + 50)
+T_range = (0 , 550)
 tangent_points , gibbs = phase_diagram(x , mix_enthalpy , T_range = T_range, single_energy = single_energy, system = system)
 gibbs_plot = gibbs[0::1]
 # fig, axs = plt.subplots(1, 1, sharex = True, sharey = True, figsize = (10, 8))
@@ -63,9 +63,9 @@ print(sort)
 x, y = sort[:,0], sort[:, 1]
 plt.plot(x,y, linewidth = 4)
 plt.xlim([0,100])
-plt.ylim([1000, T_range[1]])
+plt.ylim([200, 1000])
 plt.ylabel("T(K)")
-plt.xlabel("$x_{W}$")
+plt.xlabel("$x_{Hf}$")
 plt.show()
 # tangent_points = np.array(tangent_points)
 # new_pad = []

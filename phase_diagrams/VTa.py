@@ -16,7 +16,7 @@ matplotlib.rc('font' , **font)
 alloy = "V-Ta"
 lattice = "BCC"
 mol_fraction , dft_energies , system = process_inputs(alloy = alloy , lattice = lattice)
-single_energy_path = "/Users/pravanomprakash/Documents/Projects/highEntropyAlloys/data/single_energy.json"
+single_energy_path = "/data/single_energy.json"
 single_energy = load_json_to_dict(single_energy_path)
 
 alloy_enthalpies , x , mix_enthalpy = get_enthalpy_fit(

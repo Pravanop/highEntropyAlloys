@@ -32,7 +32,8 @@ for key, value in bin.items():
     ele_list = key.split('-')
     like_bonds = [ele[i] for i in ele_list]
 
-    ab[key] = np.round((sum(like_bonds)+value/1000)/2,3)
+    # ab[key] = np.round((sum(like_bonds)+value/1000)/2,3)
+    ab[key] = value
     for i in ele_list:
         ab[f"{i}-{i}"] = ele[i]
 

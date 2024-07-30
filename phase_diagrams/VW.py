@@ -13,10 +13,10 @@ font = {
 		}
 matplotlib.rc('font' , **font)
 
-alloy = "Ta-W"
+alloy = "V-W"
 lattice = "BCC"
 mol_fraction , dft_energies , system = process_inputs(alloy = alloy , lattice = lattice)
-single_energy_path = "/Users/pravanomprakash/Documents/Projects/highEntropyAlloys/data/single_energy.json"
+single_energy_path = "/data/single_energy.json"
 single_energy = load_json_to_dict(single_energy_path)
 
 alloy_enthalpies , x , mix_enthalpy = get_enthalpy_fit(
@@ -49,7 +49,7 @@ sm = plt.cm.ScalarMappable(cmap='Blues', norm=plt.Normalize(vmin=T_range[0], vma
 cbar_ax = fig.add_axes([0.91, 0.15, 0.02, 0.7])
 cbar = fig.colorbar(sm, cax=cbar_ax, aspect = 0.3)
 cbar.ax.set_ylabel("Temperature")
-axs.set_xlabel("$X_{Ta}$")
+axs.set_xlabel("$X_{V}$")
 axs.set_ylabel("G (meV/atom)")
 rang = abs(T_range[0] - T_range[1])
 plt.show()
